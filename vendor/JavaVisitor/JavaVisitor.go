@@ -16,8 +16,12 @@ type Visitor interface {
 	Visit(node ast.Node) (w Visitor)
 }
 
-// Helper functions for common node lists. They may be empty.
+var javaMap = map[string]string{
+	"fmt":     "System.out",
+	"Println": "println",
+}
 
+// Helper functions for common node lists. They may be empty.
 func walkIdentList(v Visitor, list []*ast.Ident) {
 	for _, x := range list {
 		Walk(v, x)
@@ -37,7 +41,7 @@ func walkStmtList(v Visitor, list []ast.Stmt) {
 	for i, x := range list {
 		Walk(v, x)
 		if i < len(list)-1 {
-			fmt.Printf("\n")
+			fmt.Printf(";\n")
 		}
 	}
 }
@@ -100,7 +104,11 @@ func Walk(v Visitor, node ast.Node) {
 		// do nothing
 
 	case *ast.Ident:
-		fmt.Printf("%s", n.Name)
+		if val, ok := javaMap[n.Name]; ok {
+			fmt.Printf("%s", val)
+		} else {
+			fmt.Printf("%s", n.Name)
+		}
 
 	case *ast.BasicLit:
 		fmt.Printf("%s", n.Value)
@@ -391,6 +399,7 @@ func Walk(v Visitor, node ast.Node) {
 		if n.Doc != nil {
 			Walk(v, n.Doc)
 		}
+		/* ignore imports for now
 		fmt.Printf("%s ", n.Tok)
 		multiImport := n.Tok.String() == "import" && n.Lparen.IsValid()
 		if multiImport {
@@ -398,13 +407,14 @@ func Walk(v Visitor, node ast.Node) {
 		}
 		for i, s := range n.Specs {
 			Walk(v, s)
-			if multiImport && i != len(n.Specs)-1 {
-				fmt.Printf("\n")
+				if multiImport && i != len(n.Specs)-1 {
+					fmt.Printf("\n")
+				}
+		}
+			if multiImport {
+				fmt.Printf(")\n")
 			}
-		}
-		if multiImport {
-			fmt.Printf(")\n")
-		}
+		*/
 
 	case *ast.FuncDecl:
 		if n.Doc != nil {
@@ -427,10 +437,11 @@ func Walk(v Visitor, node ast.Node) {
 		if n.Doc != nil {
 			Walk(v, n.Doc)
 		}
-		fmt.Printf("package ")
+		fmt.Printf("class ") //map package->class
 		Walk(v, n.Name)
-		fmt.Printf("\n")
+		fmt.Printf("{\n")
 		walkDeclList(v, n.Decls)
+		fmt.Printf("\n}")
 		// don't walk n.Comments - they have been
 		// visited already through the individual
 		// nodes
