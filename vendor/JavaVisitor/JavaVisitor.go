@@ -16,9 +16,13 @@ type Visitor interface {
 	Visit(node ast.Node) (w Visitor)
 }
 
+// javaMap specifies certain 1-1 relationships between go and java
+// libraries, functions, keywords, and so on
+// May not necessarily hold for all cases
 var javaMap = map[string]string{
 	"fmt":     "System.out",
 	"Println": "println",
+	"func":    "public static",
 }
 
 // Helper functions for common node lists. They may be empty.
@@ -38,11 +42,13 @@ func walkExprList(v Visitor, list []ast.Expr) {
 }
 
 func walkStmtList(v Visitor, list []ast.Stmt) {
-	for i, x := range list {
+	for _, x := range list {
 		Walk(v, x)
-		if i < len(list)-1 {
-			fmt.Printf(";\n")
-		}
+		/*
+			if i < len(list)-1 {
+				fmt.Printf(";\n")
+			}*/
+		fmt.Printf(";\n")
 	}
 }
 
@@ -107,7 +113,7 @@ func Walk(v Visitor, node ast.Node) {
 		if val, ok := javaMap[n.Name]; ok {
 			fmt.Printf("%s", val)
 		} else {
-			fmt.Printf("%s", n.Name)
+			fmt.Printf("%s ", n.Name)
 		}
 
 	case *ast.BasicLit:
@@ -204,11 +210,15 @@ func Walk(v Visitor, node ast.Node) {
 		Walk(v, n.Fields)
 
 	case *ast.FuncType:
-		if n.Params != nil {
-			Walk(v, n.Params)
-		}
+		/* Handdled in FuncDecl, so Java function ordering is correct
 		if n.Results != nil {
 			Walk(v, n.Results)
+		} else {
+			fmt.Printf(" void ")
+		}
+		*/
+		if n.Params != nil {
+			Walk(v, n.Params)
 		}
 
 	case *ast.InterfaceType:
@@ -371,16 +381,16 @@ func Walk(v Visitor, node ast.Node) {
 		if n.Doc != nil {
 			Walk(v, n.Doc)
 		}
-		walkIdentList(v, n.Names)
-		if n.Type != nil {
+		if n.Type != nil { //walk the type first, for Java
 			Walk(v, n.Type)
 		}
+		walkIdentList(v, n.Names)
 		fmt.Printf(" = ")
 		walkExprList(v, n.Values)
 		if n.Comment != nil {
 			Walk(v, n.Comment)
 		}
-		fmt.Printf("\n")
+		//fmt.Printf("\n")
 
 	case *ast.TypeSpec:
 		if n.Doc != nil {
@@ -399,22 +409,31 @@ func Walk(v Visitor, node ast.Node) {
 		if n.Doc != nil {
 			Walk(v, n.Doc)
 		}
-		/* ignore imports for now
-		fmt.Printf("%s ", n.Tok)
-		multiImport := n.Tok.String() == "import" && n.Lparen.IsValid()
-		if multiImport {
-			fmt.Printf("(")
+
+		if n.Tok.String() == "import" { // ignore imports for now
+			return
+		} else if n.Tok.String() == "var" {
+			//fmt.Printf("%s ", n.Specs[0].Values[0].Kind)
 		}
-		for i, s := range n.Specs {
-			Walk(v, s)
-				if multiImport && i != len(n.Specs)-1 {
-					fmt.Printf("\n")
-				}
-		}
+		/*
+			fmt.Printf("%s ", n.Tok)
+			multiImport := n.Tok.String() == "import" && n.Lparen.IsValid()
 			if multiImport {
-				fmt.Printf(")\n")
+				fmt.Printf("(")
 			}
+			for i, s := range n.Specs {
+				Walk(v, s)
+					if multiImport && i != len(n.Specs)-1 {
+						fmt.Printf("\n")
+					}
+			}
+				if multiImport {
+					fmt.Printf(")\n")
+				}
 		*/
+		for _, s := range n.Specs {
+			Walk(v, s)
+		}
 
 	case *ast.FuncDecl:
 		if n.Doc != nil {
@@ -423,9 +442,18 @@ func Walk(v Visitor, node ast.Node) {
 		if n.Recv != nil {
 			Walk(v, n.Recv)
 		}
-		fmt.Printf("\nfunc ")
-		Walk(v, n.Name)
-		Walk(v, n.Type)
+		if n.Name.Name == "main" { //special Java function signature
+			fmt.Printf("public static void main(String[] args) ")
+		} else {
+			fmt.Printf("%s ", javaMap["func"])
+			if n.Type.Results == nil {
+				fmt.Printf("void ")
+			} else {
+				// TODO: print the return type
+			}
+			Walk(v, n.Name)
+			Walk(v, n.Type)
+		}
 		fmt.Printf(" {\n")
 		if n.Body != nil {
 			Walk(v, n.Body)
