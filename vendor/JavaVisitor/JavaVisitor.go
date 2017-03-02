@@ -7,6 +7,7 @@ package JavaVisitor
 import (
 	"fmt"
 	"go/ast"
+	"strings"
 )
 
 // A Visitor's Visit method is invoked for each node encountered by Walk.
@@ -22,7 +23,9 @@ type Visitor interface {
 var javaMap = map[string]string{
 	"fmt":     "System.out",
 	"Println": "println",
-	"func":    "public static",
+	//	"func":    "public static",
+	"type":   "class",
+	"string": "String",
 }
 
 // Helper functions for common node lists. They may be empty.
@@ -86,24 +89,26 @@ func Walk(v Visitor, node ast.Node) {
 		if n.Doc != nil {
 			Walk(v, n.Doc)
 		}
+		Walk(v, n.Type) //Java, type first
+		fmt.Printf(" ")
 		walkIdentList(v, n.Names)
-		Walk(v, n.Type)
 		if n.Tag != nil {
 			Walk(v, n.Tag)
 		}
 		if n.Comment != nil {
 			Walk(v, n.Comment)
 		}
+		fmt.Printf(";")
 
 	case *ast.FieldList:
-		fmt.Printf("(")
+		//fmt.Printf("(")
 		for i, f := range n.List {
 			Walk(v, f)
 			if i != len(n.List)-1 {
 				fmt.Printf(", ")
 			}
 		}
-		fmt.Printf(")")
+		//fmt.Printf(")")
 
 	// Expressions
 	case *ast.BadExpr:
@@ -113,7 +118,7 @@ func Walk(v Visitor, node ast.Node) {
 		if val, ok := javaMap[n.Name]; ok {
 			fmt.Printf("%s", val)
 		} else {
-			fmt.Printf("%s ", n.Name)
+			fmt.Printf("%s", n.Name)
 		}
 
 	case *ast.BasicLit:
@@ -207,7 +212,9 @@ func Walk(v Visitor, node ast.Node) {
 		Walk(v, n.Elt)
 
 	case *ast.StructType:
+		fmt.Printf(" {\n")
 		Walk(v, n.Fields)
+		fmt.Printf("\n}")
 
 	case *ast.FuncType:
 		/* Handdled in FuncDecl, so Java function ordering is correct
@@ -396,6 +403,7 @@ func Walk(v Visitor, node ast.Node) {
 		if n.Doc != nil {
 			Walk(v, n.Doc)
 		}
+		fmt.Printf("%s ", javaMap["type"])
 		Walk(v, n.Name)
 		Walk(v, n.Type)
 		if n.Comment != nil {
@@ -440,19 +448,31 @@ func Walk(v Visitor, node ast.Node) {
 			Walk(v, n.Doc)
 		}
 		if n.Recv != nil {
-			Walk(v, n.Recv)
+			javaMap[n.Recv.List[0].Names[0].Name] = "this"
+			/*
+				fmt.Printf("(")
+				Walk(v, n.Recv)
+				fmt.Printf(")")
+			*/
 		}
 		if n.Name.Name == "main" { //special Java function signature
 			fmt.Printf("public static void main(String[] args) ")
 		} else {
-			fmt.Printf("%s ", javaMap["func"])
+			//fmt.Printf("%s ", javaMap["func"])
+			if string(n.Name.Name[0]) == strings.ToUpper(string(n.Name.Name[0])) {
+				fmt.Printf("public ")
+			} else {
+				fmt.Printf("private ")
+			}
 			if n.Type.Results == nil {
 				fmt.Printf("void ")
 			} else {
-				// TODO: print the return type
+				fmt.Printf(" %s ", n.Type.Results.List[0].Type)
 			}
 			Walk(v, n.Name)
+			fmt.Printf("(")
 			Walk(v, n.Type)
+			fmt.Printf(")")
 		}
 		fmt.Printf(" {\n")
 		if n.Body != nil {
