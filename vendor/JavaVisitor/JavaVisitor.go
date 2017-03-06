@@ -28,6 +28,9 @@ var javaMap = map[string]string{
 	"string": "String",
 }
 
+var defMethods bool = false
+var curCls string
+
 // Helper functions for common node lists. They may be empty.
 func walkIdentList(v Visitor, list []*ast.Ident) {
 	for _, x := range list {
@@ -216,10 +219,10 @@ func Walk(v Visitor, node ast.Node) {
 	case *ast.StructType:
 		fmt.Printf(" {\n")
 		Walk(v, n.Fields)
-		fmt.Printf("\n}")
+		//fmt.Printf("\n}")
 
 	case *ast.FuncType:
-		/* Handdled in FuncDecl, so Java function ordering is correct
+		/* Handled in FuncDecl, so Java function ordering is correct
 		if n.Results != nil {
 			Walk(v, n.Results)
 		} else {
@@ -402,6 +405,8 @@ func Walk(v Visitor, node ast.Node) {
 		//fmt.Printf("\n")
 
 	case *ast.TypeSpec:
+		defMethods = true
+		curCls = n.Name.Name
 		if n.Doc != nil {
 			Walk(v, n.Doc)
 		}
@@ -450,6 +455,12 @@ func Walk(v Visitor, node ast.Node) {
 			Walk(v, n.Doc)
 		}
 		if n.Recv != nil {
+			var t string = fmt.Sprintf("%v", (n.Recv.List[0].Type))
+			if defMethods && curCls != t { //closes the Java class defintion
+				defMethods = false
+				curCls = ""
+				fmt.Printf("}")
+			}
 			javaMap[n.Recv.List[0].Names[0].Name] = "this"
 			/*
 				fmt.Printf("(")
@@ -490,12 +501,10 @@ func Walk(v Visitor, node ast.Node) {
 		fmt.Printf("package ")
 		Walk(v, n.Name)
 		fmt.Printf(";\n")
-		//fmt.Printf("{\n")
 		walkDeclList(v, n.Decls)
-		//fmt.Printf("\n}")
-		// don't walk n.Comments - they have been
-		// visited already through the individual
-		// nodes
+		if defMethods { //closes Java class definition
+			fmt.Printf("}")
+		}
 
 	case *ast.Package:
 		for _, f := range n.Files {
