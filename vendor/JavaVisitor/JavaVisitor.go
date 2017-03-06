@@ -102,11 +102,13 @@ func Walk(v Visitor, node ast.Node) {
 
 	case *ast.FieldList:
 		//fmt.Printf("(")
-		for i, f := range n.List {
+		for _, f := range n.List {
 			Walk(v, f)
-			if i != len(n.List)-1 {
-				fmt.Printf(", ")
-			}
+			/*
+				if i != len(n.List)-1 {
+					fmt.Printf(", ")
+				}
+			*/
 		}
 		//fmt.Printf(")")
 
@@ -485,11 +487,12 @@ func Walk(v Visitor, node ast.Node) {
 		if n.Doc != nil {
 			Walk(v, n.Doc)
 		}
-		fmt.Printf("class ") //map package->class
+		fmt.Printf("package ")
 		Walk(v, n.Name)
-		fmt.Printf("{\n")
+		fmt.Printf(";\n")
+		//fmt.Printf("{\n")
 		walkDeclList(v, n.Decls)
-		fmt.Printf("\n}")
+		//fmt.Printf("\n}")
 		// don't walk n.Comments - they have been
 		// visited already through the individual
 		// nodes
