@@ -9,10 +9,10 @@ This program does not translate all Go programs.
 Current expectations of Go source  
 - All variable declarations/definitions of the form `var x string = "hello"` or `var x string`  
 - Go methods immediately follow the Go struct type definitions  
-Example:
+Example:  
 `type Square struct {`  
 `...`  
 `}`  
-`func (s Square) foo() {` 
-`..`  
+`func (s Square) foo() {`  
+`...`  
 `}`    
