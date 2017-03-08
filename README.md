@@ -16,3 +16,4 @@ Example:
 `func (s Square) foo() {`  
 `...`  
 `}`    
+- There is only one 'type struct' defintion per Go file. This conforms to Java syntax (not including anonymous classes)  
