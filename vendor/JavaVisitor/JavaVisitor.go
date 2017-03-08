@@ -270,7 +270,7 @@ func Walk(v Visitor, node ast.Node) {
 
 	case *ast.AssignStmt:
 		walkExprList(v, n.Lhs)
-		fmt.Printf(" := ")
+		fmt.Printf(" = ")
 		walkExprList(v, n.Rhs)
 
 	case *ast.GoStmt:
@@ -399,7 +399,9 @@ func Walk(v Visitor, node ast.Node) {
 		}
 		fmt.Printf(" ")
 		walkIdentList(v, n.Names)
-		fmt.Printf(" = ")
+		if n.Values != nil {
+			fmt.Printf(" = ")
+		}
 		walkExprList(v, n.Values)
 		if n.Comment != nil {
 			Walk(v, n.Comment)
