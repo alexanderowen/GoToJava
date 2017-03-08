@@ -16,4 +16,9 @@ Example:
 `func (s Square) foo() {`  
 `...`  
 `}`    
-- There is only one 'type struct' defintion per Go file. This conforms to Java syntax (not including anonymous classes)  
+- There is only one 'type struct' defintion per Go file. This conforms to Java syntax (not including anonymous classes)    
+## Other Notes  
+- Determines public/private based on Go capitalization syntax.  
+- Determines if a Go function should map to a Java function based on if the Go package is 'main'.   
+This behavior should be explored. May not preferable.   
+
