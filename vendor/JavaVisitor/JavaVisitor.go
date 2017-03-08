@@ -29,8 +29,17 @@ var javaMap = map[string]string{
 	"string": "String",
 }
 
+// Globals
 var defMethods bool = false
 var curCls string
+
+// For FieldList; are the Fields variables or parameters?
+var fieldVars bool = false
+var fieldParams bool = false
+
+// Is this file a 'main' function (requiring all functions be static)
+// TODO: Reevaluate this decision
+var mainClass bool = false
 
 // Helper functions for common node lists. They may be empty.
 func walkIdentList(v Visitor, list []*ast.Ident) {
@@ -102,19 +111,23 @@ func Walk(v Visitor, node ast.Node) {
 		if n.Comment != nil {
 			Walk(v, n.Comment)
 		}
-		fmt.Printf(";")
 
 	case *ast.FieldList:
-		//fmt.Printf("(")
-		for _, f := range n.List {
+		for i, f := range n.List {
 			Walk(v, f)
-			/*
-				if i != len(n.List)-1 {
+			if i != len(n.List)-1 {
+				if fieldVars {
+					fmt.Printf("; ")
+				} else if fieldParams {
 					fmt.Printf(", ")
 				}
-			*/
+			}
 		}
-		//fmt.Printf(")")
+		if fieldVars { //all vars require semicolon
+			fmt.Printf("; ")
+		}
+		fieldVars = false //reset globals
+		fieldParams = false
 
 	// Expressions
 	case *ast.BadExpr:
@@ -219,6 +232,7 @@ func Walk(v Visitor, node ast.Node) {
 
 	case *ast.StructType:
 		fmt.Printf(" {\n")
+		fieldVars = true
 		Walk(v, n.Fields)
 		//fmt.Printf("\n}")
 
@@ -231,6 +245,8 @@ func Walk(v Visitor, node ast.Node) {
 		}
 		*/
 		if n.Params != nil {
+			fieldParams = true
+			fieldVars = false
 			Walk(v, n.Params)
 		}
 
@@ -475,12 +491,16 @@ func Walk(v Visitor, node ast.Node) {
 		if n.Name.Name == "main" { //special Java function signature
 			fmt.Printf("public static void main(String[] args) ")
 		} else {
-			//fmt.Printf("%s ", javaMap["func"])
 			if string(n.Name.Name[0]) == strings.ToUpper(string(n.Name.Name[0])) {
 				fmt.Printf("public ")
 			} else {
 				fmt.Printf("private ")
 			}
+
+			if mainClass {
+				fmt.Printf("static ")
+			}
+
 			if n.Type.Results == nil {
 				fmt.Printf("void ")
 			} else {
@@ -509,6 +529,7 @@ func Walk(v Visitor, node ast.Node) {
 		}
 
 		if n.Name.Name == "main" { //if Go package is main, map to 'class Main'
+			mainClass = true //set global var
 			fmt.Printf("class ")
 			Walk(v, n.Name)
 			fmt.Printf("{\n")
