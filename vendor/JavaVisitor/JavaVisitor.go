@@ -1,6 +1,7 @@
-// Custom visitor for the Go compiler AST
-// For a subset of possible Go programs, prints an approximation of the source to stdout
-// Large part of code base provided by the Go compiler visitor, "go/ast/walk.go"
+/* Custom visitor for the Go compiler AST
+ * For a subset of possible Go programs, prints an approximation of the source to stdout
+ * Large part of code base provided by the Go compiler visitor, "go/ast/walk.go"
+ * */
 
 package JavaVisitor
 
@@ -396,6 +397,7 @@ func Walk(v Visitor, node ast.Node) {
 		if n.Type != nil { //walk the type first, for Java
 			Walk(v, n.Type)
 		}
+		fmt.Printf(" ")
 		walkIdentList(v, n.Names)
 		fmt.Printf(" = ")
 		walkExprList(v, n.Values)
@@ -480,7 +482,12 @@ func Walk(v Visitor, node ast.Node) {
 			if n.Type.Results == nil {
 				fmt.Printf("void ")
 			} else {
-				fmt.Printf(" %s ", n.Type.Results.List[0].Type)
+				retVal := fmt.Sprintf("%s", n.Type.Results.List[0].Type)
+				if val, ok := javaMap[retVal]; ok {
+					fmt.Printf(" %s ", val)
+				} else {
+					fmt.Printf(" %s ", retVal)
+				}
 			}
 			Walk(v, n.Name)
 			fmt.Printf("(")
@@ -498,12 +505,21 @@ func Walk(v Visitor, node ast.Node) {
 		if n.Doc != nil {
 			Walk(v, n.Doc)
 		}
-		fmt.Printf("package ")
-		Walk(v, n.Name)
-		fmt.Printf(";\n")
-		walkDeclList(v, n.Decls)
-		if defMethods { //closes Java class definition
-			fmt.Printf("}")
+
+		if n.Name.Name == "main" { //if Go package is main, map to 'class Main'
+			fmt.Printf("class ")
+			Walk(v, n.Name)
+			fmt.Printf("{\n")
+			walkDeclList(v, n.Decls)
+			fmt.Printf("\n}")
+		} else { //otherwise, treat as package
+			fmt.Printf("package ")
+			Walk(v, n.Name)
+			fmt.Printf(";\n")
+			walkDeclList(v, n.Decls)
+			if defMethods { //closes Java class definition
+				fmt.Printf("}")
+			}
 		}
 
 	case *ast.Package:
