@@ -366,16 +366,21 @@ func Walk(v Visitor, node ast.Node) {
 		Walk(v, n.Body)
 
 	case *ast.ForStmt:
+		fmt.Printf("for (")
 		if n.Init != nil {
 			Walk(v, n.Init)
 		}
+		fmt.Printf(";")
 		if n.Cond != nil {
 			Walk(v, n.Cond)
 		}
+		fmt.Printf(";")
 		if n.Post != nil {
 			Walk(v, n.Post)
 		}
+		fmt.Printf(") {\n")
 		Walk(v, n.Body)
+		fmt.Printf("\n}")
 
 	case *ast.RangeStmt:
 		fmt.Printf("for ")
