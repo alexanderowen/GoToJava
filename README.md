@@ -17,6 +17,12 @@ Example:
 `...`  
 `}`    
 - There is only one 'type struct' defintion per Go file. This conforms to Java syntax (not including anonymous classes)    
+- Go does not allow initialization of the syntax `var i int = 0` in the init of a for loop delcaration  
+As a result, for loops should be of the syntax  
+`var i int`  
+`for i = 0; i < n; i++ {`  
+`...`  
+`}`  
 
 ## Other Notes  
 - Determines public/private based on Go capitalization syntax.  
