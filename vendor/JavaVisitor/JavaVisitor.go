@@ -286,7 +286,7 @@ func Walk(v Visitor, node ast.Node) {
 
 	case *ast.AssignStmt:
 		walkExprList(v, n.Lhs)
-		fmt.Printf(" = ")
+		fmt.Printf(" %v ", n.Tok)
 		walkExprList(v, n.Rhs)
 
 	case *ast.GoStmt:
