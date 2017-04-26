@@ -28,4 +28,6 @@ As a result, for loops should be of the syntax
 - Determines public/private based on Go capitalization syntax.  
 - Determines if a Go function should map to a Java function based on if the Go package is 'main'.   
 This behavior should be explored. May not preferable.   
-
+### Version  
+Developed on  
+go version go1.7.5 darwin/amd64
